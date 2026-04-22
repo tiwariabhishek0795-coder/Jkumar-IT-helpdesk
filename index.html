@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J. Kumar Infraprojects – IT Helpdesk System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --dark:#060b14;--dark2:#0d1525;--dark3:#111e30;
+  --gold:#e8a020;--gold2:#f5c842;--gold3:#c8860a;
+  --text:#f0f4ff;--muted:#7b8db0;--dim:#3a4a6b;
+  --red:#e74c3c;--green:#22c55e;
+  --font:'Sora',sans-serif;--body:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--dark);color:var(--text);
+  font-family:var(--body);min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ANIMATED BG */
+.bg-grid{
+  position:fixed;inset:0;z-index:0;
+  background-image:
+    linear-gradient(rgba(232,160,32,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(232,160,32,.03) 1px,transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;
+}
+.bg-glow{
+  position:fixed;top:-200px;left:50%;transform:translateX(-50%);
+  width:800px;height:400px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(232,160,32,.08) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+  animation:pulse 4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:.6;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.05)}}
+
+/* HEADER */
+.header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(6,11,20,.85);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(232,160,32,.12);
+  padding:14px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.h-brand{display:flex;align-items:center;gap:14px}
+.h-logo{
+  width:44px;height:52px;border-radius:8px;overflow:hidden;
+  border:1px solid rgba(232,160,32,.3);background:#000;flex-shrink:0;
+}
+.h-logo svg{display:block}
+.h-title{font-family:var(--font);font-size:14px;font-weight:800;color:var(--gold2);letter-spacing:.2px}
+.h-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.h-nav{display:flex;align-items:center;gap:8px}
+.h-nav a{
+  color:var(--muted);font-size:12px;font-weight:600;text-decoration:none;
+  padding:6px 12px;border-radius:7px;transition:.2s;
+}
+.h-nav a:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.h-cta{
+  background:linear-gradient(135deg,var(--gold),var(--gold3));
+  color:#000;font-size:12px;font-weight:700;
+  padding:8px 16px;border-radius:8px;text-decoration:none;
+  letter-spacing:.3px;transition:.2s;
+}
+.h-cta:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(232,160,32,.3);color:#000 !important}
+
+/* HERO */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:120px 24px 60px;text-align:center;
+  position:relative;z-index:1;
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(232,160,32,.08);border:1px solid rgba(232,160,32,.2);
+  color:var(--gold2);font-size:11px;font-weight:700;
+  padding:6px 16px;border-radius:20px;margin-bottom:28px;
+  letter-spacing:.5px;text-transform:uppercase;
+  animation:fadeUp .6s ease both;
+}
+.hero h1{
+  font-family:var(--font);font-size:clamp(36px,6vw,72px);
+  font-weight:900;line-height:1.08;letter-spacing:-1px;
+  margin-bottom:20px;
+  animation:fadeUp .7s ease .1s both;
+}
+.hero h1 .line1{color:var(--text)}
+.hero h1 .line2{
+  background:linear-gradient(135deg,var(--gold2),var(--gold3),var(--gold2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-size:200% auto;
+  animation:shimmer 3s linear infinite;
+}
+@keyframes shimmer{0%{background-position:0% center}100%{background-position:200% center}}
+.hero-desc{
+  font-size:16px;color:var(--muted);max-width:560px;line-height:1.7;
+  margin-bottom:40px;font-weight:400;
+  animation:fadeUp .7s ease .2s both;
+}
+.hero-btns{
+  display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+  animation:fadeUp .7s ease .3s both;
+}
+.btn-primary{
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,var(--gold),var(--gold3));
+  color:#000;font-family:var(--font);font-size:15px;font-weight:800;
+  padding:16px 32px;border-radius:12px;text-decoration:none;
+  box-shadow:0 8px 32px rgba(232,160,32,.25);transition:.3s;letter-spacing:.2px;
+}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(232,160,32,.35);color:#000}
+.btn-secondary{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.04);
+  border:1.5px solid rgba(255,255,255,.12);
+  color:var(--text);font-family:var(--font);font-size:15px;font-weight:700;
+  padding:16px 32px;border-radius:12px;text-decoration:none;transition:.3s;
+}
+.btn-secondary:hover{background:rgba(255,255,255,.08);border-color:rgba(232,160,32,.4);transform:translateY(-2px)}
+.btn-icon{font-size:20px}
+
+/* SCROLL INDICATOR */
+.scroll-hint{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  color:var(--muted);font-size:11px;letter-spacing:.5px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  animation:bounce 2s ease-in-out infinite;
+}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+
+/* PORTAL CARDS SECTION */
+.section{padding:80px 24px;position:relative;z-index:1}
+.section-label{
+  text-align:center;font-size:11px;font-weight:700;
+  color:var(--gold);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;
+}
+.section-title{
+  text-align:center;font-family:var(--font);font-size:clamp(24px,4vw,40px);
+  font-weight:800;line-height:1.2;margin-bottom:48px;letter-spacing:-.5px;
+}
+.section-title span{color:var(--gold2)}
+.portals-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:24px;
+  max-width:960px;margin:0 auto;
+}
+.portal-card{
+  border-radius:20px;padding:36px 32px;text-decoration:none;
+  transition:.4s cubic-bezier(.22,1,.36,1);
+  position:relative;overflow:hidden;display:block;
+}
+.portal-card::before{
+  content:'';position:absolute;inset:0;border-radius:20px;
+  transition:opacity .4s;opacity:0;
+}
+.portal-card:hover{transform:translateY(-6px)}
+.portal-card:hover::before{opacity:1}
+
+/* Employee card — light/warm */
+.card-employee{
+  background:linear-gradient(135deg,#0f1f38,#162540);
+  border:1px solid rgba(59,130,246,.2);
+}
+.card-employee::before{
+  background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(232,160,32,.04));
+}
+.card-employee:hover{
+  border-color:rgba(59,130,246,.45);
+  box-shadow:0 20px 60px rgba(59,130,246,.15),0 0 0 1px rgba(59,130,246,.2);
+}
+
+/* Admin card — dark/gold */
+.card-admin{
+  background:linear-gradient(135deg,#130d04,#1c1306);
+  border:1px solid rgba(232,160,32,.2);
+}
+.card-admin::before{
+  background:linear-gradient(135deg,rgba(232,160,32,.1),rgba(200,134,10,.04));
+}
+.card-admin:hover{
+  border-color:rgba(232,160,32,.5);
+  box-shadow:0 20px 60px rgba(232,160,32,.12),0 0 0 1px rgba(232,160,32,.25);
+}
+
+.pc-badge{
+  display:inline-block;font-size:10px;font-weight:700;
+  padding:4px 12px;border-radius:20px;margin-bottom:20px;letter-spacing:.5px;text-transform:uppercase;
+}
+.pc-badge.emp{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
+.pc-badge.adm{background:rgba(232,160,32,.12);color:var(--gold2);border:1px solid rgba(232,160,32,.3)}
+.pc-icon{font-size:44px;margin-bottom:16px;display:block}
+.pc-title{
+  font-family:var(--font);font-size:24px;font-weight:800;
+  margin-bottom:10px;line-height:1.2;
+}
+.card-employee .pc-title{color:#93c5fd}
+.card-admin .pc-title{color:var(--gold2)}
+.pc-desc{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:24px}
+.pc-features{display:flex;flex-direction:column;gap:8px;margin-bottom:28px}
+.pc-feat{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:rgba(255,255,255,.6);
+}
+.pc-feat::before{content:'✓';font-weight:700;font-size:11px}
+.card-employee .pc-feat::before{color:#60a5fa}
+.card-admin .pc-feat::before{color:var(--gold2)}
+.pc-action{
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--font);font-size:14px;font-weight:700;letter-spacing:.2px;
+  padding:12px 20px;border-radius:10px;transition:.2s;
+  width:fit-content;
+}
+.card-employee .pc-action{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
+.card-employee:hover .pc-action{background:rgba(59,130,246,.25)}
+.card-admin .pc-action{background:rgba(232,160,32,.12);color:var(--gold2);border:1px solid rgba(232,160,32,.3)}
+.card-admin:hover .pc-action{background:rgba(232,160,32,.22)}
+
+/* LIVE STATS */
+.live-stats{
+  max-width:800px;margin:0 auto;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;padding:28px 32px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  position:relative;z-index:1;
+}
+.ls-item{
+  text-align:center;padding:8px 16px;
+  border-right:1px solid rgba(255,255,255,.07);
+}
+.ls-item:last-child{border-right:none}
+.ls-num{font-family:var(--mono);font-size:28px;font-weight:600;color:var(--gold2)}
+.ls-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+
+/* DATA STORAGE SECTION */
+.storage-section{
+  padding:80px 24px;position:relative;z-index:1;
+  border-top:1px solid rgba(255,255,255,.05);
+}
+.storage-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:960px;margin:0 auto}
+.storage-card{
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;padding:28px;
+}
+.storage-card.featured{
+  background:linear-gradient(135deg,rgba(232,160,32,.06),rgba(200,134,10,.03));
+  border-color:rgba(232,160,32,.2);
+}
+.sc-icon{font-size:32px;margin-bottom:14px}
+.sc-title{font-family:var(--font);font-size:16px;font-weight:700;margin-bottom:8px}
+.sc-desc{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:16px}
+.sc-list{display:flex;flex-direction:column;gap:7px}
+.sc-li{display:flex;align-items:start;gap:8px;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5}
+.sc-li .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:6px}
+.code-block{
+  background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:14px 16px;margin-top:16px;
+  font-family:var(--mono);font-size:11px;color:#4ade80;line-height:1.7;
+  overflow-x:auto;white-space:pre;
+}
+
+/* HOW TO DEPLOY */
+.deploy-section{
+  padding:80px 24px;position:relative;z-index:1;
+  border-top:1px solid rgba(255,255,255,.05);
+}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:960px;margin:0 auto 40px}
+.step-card{
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;padding:24px;
+  position:relative;
+}
+.step-num{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold3));
+  color:#000;font-family:var(--mono);font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:14px;
+}
+.step-title{font-family:var(--font);font-size:14px;font-weight:700;margin-bottom:8px;color:var(--gold2)}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.7}
+.step-tag{
+  display:inline-block;background:rgba(34,197,94,.1);
+  border:1px solid rgba(34,197,94,.25);color:#4ade80;
+  font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;
+  margin-top:10px;letter-spacing:.3px;
+}
+
+.option-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;max-width:960px;margin:0 auto}
+.opt-card{
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;padding:20px;
+}
+.opt-card.best{border-color:rgba(232,160,32,.3);background:rgba(232,160,32,.04)}
+.opt-badge{
+  font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  padding:3px 8px;border-radius:20px;margin-bottom:10px;display:inline-block;
+}
+.opt-badge.b-best{background:rgba(232,160,32,.15);color:var(--gold2)}
+.opt-badge.b-easy{background:rgba(59,130,246,.15);color:#60a5fa}
+.opt-badge.b-adv{background:rgba(139,92,246,.15);color:#a78bfa}
+.opt-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
+.opt-url{font-family:var(--mono);font-size:11px;color:var(--gold2);margin-bottom:8px}
+.opt-desc{font-size:11px;color:var(--muted);line-height:1.6}
+.opt-steps{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+.opt-step{font-size:11px;color:rgba(255,255,255,.5);display:flex;gap:6px}
+.opt-step span{color:var(--gold);font-weight:700;flex-shrink:0}
+
+/* FOOTER */
+.footer{
+  text-align:center;padding:32px 24px;
+  border-top:1px solid rgba(255,255,255,.06);
+  position:relative;z-index:1;
+}
+.footer-logo{margin-bottom:14px}
+.footer-name{font-family:var(--font);font-size:14px;font-weight:800;color:var(--gold2)}
+.footer-dev{
+  font-size:12px;color:var(--muted);margin-top:12px;line-height:1.8;
+}
+.footer-dev strong{color:var(--gold2)}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* RESPONSIVE */
+@media(max-width:680px){
+  .portals-grid{grid-template-columns:1fr}
+  .storage-grid{grid-template-columns:1fr}
+  .steps-grid{grid-template-columns:1fr}
+  .option-cards{grid-template-columns:1fr}
+  .live-stats{grid-template-columns:1fr 1fr}
+  .ls-item:nth-child(2){border-right:none}
+  .ls-item:nth-child(3){border-top:1px solid rgba(255,255,255,.07)}
+  .header{padding:12px 16px}
+  .h-nav{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="h-brand">
+    <div class="h-logo">
+      <svg viewBox="0 0 44 52" fill="none" width="44" height="52">
+        <rect width="44" height="52" rx="6" fill="#000"/>
+        <circle cx="22" cy="18" r="13" fill="#F5C842"/>
+        <rect x="6" y="27" width="32" height="16" fill="#C8960A"/>
+        <polygon points="22,8 32,26 12,26" fill="#C0392B"/>
+        <text x="22" y="23" font-family="serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">J</text>
+        <text x="22" y="37" font-family="sans-serif" font-size="5.5" font-weight="600" fill="#1a1a2e" text-anchor="middle">Since 1980</text>
+        <text x="22" y="48" font-family="sans-serif" font-size="6.5" font-weight="800" fill="white" text-anchor="middle">J. Kumar</text>
+      </svg>
+    </div>
+    <div>
+      <div class="h-title">J. Kumar Infraprojects Ltd.</div>
+      <div class="h-sub">IT Helpdesk System</div>
+    </div>
+  </div>
+  <div class="h-nav">
+    <a href="#portals">Portals</a>
+    <a href="#storage">Data Storage</a>
+    <a href="#deploy">Go Live</a>
+    <a href="employee_portal.html" class="h-cta">🎫 Raise Ticket</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">🏗️ J. Kumar Infraprojects Limited · Est. 1980</div>
+  <h1>
+    <div class="line1">IT Helpdesk</div>
+    <div class="line2">Management System</div>
+  </h1>
+  <p class="hero-desc">A complete internal IT support platform for J. Kumar Infraprojects employees — raise tickets on mobile, track status in real-time, and let IT resolve issues faster than ever.</p>
+  <div class="hero-btns">
+    <a href="employee_portal.html" class="btn-primary">
+      <span class="btn-icon">🎫</span> Employee Portal
+    </a>
+    <a href="admin_portal.html" class="btn-secondary">
+      <span class="btn-icon">🔐</span> IT Admin Dashboard
+    </a>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll to explore</span>
+    <span style="font-size:18px">↓</span>
+  </div>
+</div>
+
+<!-- LIVE STATS -->
+<div style="padding:0 24px 60px;position:relative;z-index:1">
+  <div class="live-stats">
+    <div class="ls-item"><div class="ls-num" id="stat-total">0</div><div class="ls-lbl">Total Tickets</div></div>
+    <div class="ls-item"><div class="ls-num" id="stat-open" style="color:#f87171">0</div><div class="ls-lbl">Open</div></div>
+    <div class="ls-item"><div class="ls-num" id="stat-res" style="color:#4ade80">0</div><div class="ls-lbl">Resolved</div></div>
+    <div class="ls-item"><div class="ls-num" id="stat-users" style="color:#60a5fa">0</div><div class="ls-lbl">Employees</div></div>
+  </div>
+</div>
+
+<!-- PORTALS -->
+<div class="section" id="portals">
+  <div class="section-label">Choose Your Portal</div>
+  <div class="section-title">Two Separate Apps,<br><span>One Shared System</span></div>
+  <div class="portals-grid">
+
+    <!-- EMPLOYEE -->
+    <a href="employee_portal.html" class="portal-card card-employee">
+      <span class="pc-badge emp">👤 For All Employees</span>
+      <div class="pc-icon">🎫</div>
+      <div class="pc-title">Employee Portal</div>
+      <p class="pc-desc">Submit IT support requests from any device — mobile, tablet or computer. Track your ticket status in real time.</p>
+      <div class="pc-features">
+        <div class="pc-feat">Raise ticket in under 2 minutes</div>
+        <div class="pc-feat">Select department, category & priority</div>
+        <div class="pc-feat">Get a Ticket ID instantly</div>
+        <div class="pc-feat">View all your submitted tickets</div>
+        <div class="pc-feat">100% mobile friendly</div>
+      </div>
+      <div class="pc-action">Open Employee Portal →</div>
+    </a>
+
+    <!-- ADMIN -->
+    <a href="admin_portal.html" class="portal-card card-admin">
+      <span class="pc-badge adm">🔐 IT Team Only</span>
+      <div class="pc-icon">📊</div>
+      <div class="pc-title">Admin Dashboard</div>
+      <p class="pc-desc">Full control for IT team. View all tickets, update status, generate analytics & export GM-ready reports.</p>
+      <div class="pc-features">
+        <div class="pc-feat">Secure login (admin only)</div>
+        <div class="pc-feat">8 live KPI stats cards</div>
+        <div class="pc-feat">Filter, search & manage tickets</div>
+        <div class="pc-feat">User analytics with bar charts</div>
+        <div class="pc-feat">Export CSV / PDF / Print for GM</div>
+      </div>
+      <div class="pc-action">Open Admin Dashboard →</div>
+    </a>
+  </div>
+</div>
+
+<!-- DATA STORAGE -->
+<div class="storage-section" id="storage">
+  <div class="section-label">Understanding Your Data</div>
+  <div class="section-title" style="margin-bottom:40px">Where &amp; How<br><span>Your Data is Stored</span></div>
+
+  <div class="storage-grid">
+
+    <div class="storage-card featured">
+      <div class="sc-icon">💾</div>
+      <div class="sc-title" style="color:var(--gold2)">Current Storage: Browser localStorage</div>
+      <div class="sc-desc">Right now all ticket data is saved in the browser's built-in localStorage on the device where Admin Portal is opened. It works instantly with zero setup — no server needed.</div>
+      <div class="sc-list">
+        <div class="sc-li"><span class="dot"></span>Data stays permanently until browser cache is manually cleared</div>
+        <div class="sc-li"><span class="dot"></span>All tickets visible in Admin Portal on the same browser</div>
+        <div class="sc-li"><span class="dot"></span>Export CSV/PDF anytime to backup your data</div>
+        <div class="sc-li"><span class="dot"></span>Best for: Single-device admin use, quick start</div>
+      </div>
+      <div class="code-block">// Where data lives in your browser:
+localStorage.getItem('jkumar_helpdesk_tickets')
+
+// To manually backup — open browser console &amp; run:
+copy(localStorage.getItem('jkumar_helpdesk_tickets'))
+// Then paste in Notepad and save as .json file</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="storage-card">
+        <div class="sc-icon">📤</div>
+        <div class="sc-title">Export = Your Permanent Backup</div>
+        <div class="sc-desc">Every time you export CSV or PDF from Admin Portal, that becomes your permanent data record.</div>
+        <div class="sc-list">
+          <div class="sc-li"><span class="dot"></span>Export CSV → Open in Excel → Save as .xlsx</div>
+          <div class="sc-li"><span class="dot"></span>Export PDF → Print or Save to Google Drive</div>
+          <div class="sc-li"><span class="dot"></span>GM Report → Print directly for meetings</div>
+          <div class="sc-li"><span class="dot"></span>Do this regularly (weekly/monthly)</div>
+        </div>
+      </div>
+
+      <div class="storage-card">
+        <div class="sc-icon">☁️</div>
+        <div class="sc-title" style="color:#60a5fa">Future Upgrade: Google Sheets Backend</div>
+        <div class="sc-desc">For multi-device access (so any employee on any computer can see tickets), a Google Sheets backend can be added — completely free.</div>
+        <div class="sc-list">
+          <div class="sc-li"><span class="dot"></span>All tickets auto-saved to Google Sheet</div>
+          <div class="sc-li"><span class="dot"></span>Access from any device, anywhere</div>
+          <div class="sc-li"><span class="dot"></span>Share sheet with GM directly</div>
+          <div class="sc-li"><span class="dot"></span>Tell Abhishek Tiwari to add this integration</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="storage-card" style="grid-column:1/-1">
+      <div style="display:flex;align-items:start;gap:20px;flex-wrap:wrap">
+        <div style="flex:1;min-width:240px">
+          <div class="sc-icon">⚠️</div>
+          <div class="sc-title" style="color:#fbbf24">Important: Don't Lose Your Data</div>
+          <div class="sc-desc">Follow these steps to keep your ticket data safe:</div>
+          <div class="sc-list" style="margin-top:10px">
+            <div class="sc-li"><span class="dot" style="background:#fbbf24"></span>Export CSV every Friday (end of week backup)</div>
+            <div class="sc-li"><span class="dot" style="background:#fbbf24"></span>Never clear browser cache / history on admin PC</div>
+            <div class="sc-li"><span class="dot" style="background:#fbbf24"></span>Always use same browser on same PC for admin</div>
+            <div class="sc-li"><span class="dot" style="background:#fbbf24"></span>Save exported files in company shared folder</div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:240px">
+          <div class="sc-icon">🔍</div>
+          <div class="sc-title" style="color:#4ade80">Check Your Data Right Now</div>
+          <div class="sc-desc">Open Admin Portal → All Tickets → Export CSV. Open the file in Excel to see all data with columns: Ticket ID, Employee, Department, Issue, Priority, Status, Date.</div>
+          <div style="margin-top:12px">
+            <a href="admin_portal.html" style="
+              display:inline-flex;align-items:center;gap:6px;
+              background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);
+              color:#4ade80;font-size:12px;font-weight:700;
+              padding:9px 16px;border-radius:8px;text-decoration:none;transition:.2s;
+            " onmouseover="this.style.background='rgba(34,197,94,.2)'" onmouseout="this.style.background='rgba(34,197,94,.12)'">
+              📥 Go to Admin &amp; Export Now →
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DEPLOY / GO LIVE -->
+<div class="deploy-section" id="deploy">
+  <div class="section-label">Go Live Guide</div>
+  <div class="section-title" style="margin-bottom:40px">Ye App Live Kaise<br><span>Karein — Step by Step</span></div>
+
+  <div class="steps-grid" style="margin-bottom:32px">
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <div class="step-title">Download 3 Files</div>
+      <div class="step-desc">Aapke paas ye teen files honi chahiye:<br><br>
+        📄 <strong style="color:var(--gold2)">index.html</strong><br>
+        📄 <strong style="color:#60a5fa">employee_portal.html</strong><br>
+        📄 <strong style="color:#f87171">admin_portal.html</strong><br><br>
+        Teeno ko ek folder mein rakhein, jaise: <code style="color:var(--gold2);font-family:var(--mono)">jkumar-helpdesk/</code>
+      </div>
+      <span class="step-tag">✓ Already Done</span>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <div class="step-title">Choose Hosting (Free)</div>
+      <div class="step-desc">Niche diye gaye teeno options mein se koi ek choose karein. Sab free hain, koi payment nahi. GitHub Pages sabse best hai kyunki permanent aur fast hai.</div>
+      <span class="step-tag">✓ Free Forever</span>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <div class="step-title">Share URL with Team</div>
+      <div class="step-desc">Live hone ke baad aapko ek URL milega jaise:<br><br>
+        <code style="color:var(--gold2);font-family:var(--mono);font-size:10px">https://yourname.github.io/helpdesk/</code><br><br>
+        Yahi link WhatsApp/Email se employees ko share karo. Kisi bhi phone mein khulega!</div>
+      <span class="step-tag">✓ Any Device</span>
+    </div>
+  </div>
+
+  <div class="option-cards">
+    <div class="opt-card best">
+      <div class="opt-badge b-best">⭐ Best & Recommended</div>
+      <div class="opt-title">GitHub Pages</div>
+      <div class="opt-url">github.io/yourname/helpdesk</div>
+      <div class="opt-desc">Sabse reliable, fast aur permanent free hosting. Professional URL milta hai.</div>
+      <div class="opt-steps">
+        <div class="opt-step"><span>1.</span> github.com pe free account banao</div>
+        <div class="opt-step"><span>2.</span> "New Repository" click karo</div>
+        <div class="opt-step"><span>3.</span> Name: <code style="color:var(--gold2)">jkumar-helpdesk</code></div>
+        <div class="opt-step"><span>4.</span> Teeno HTML files upload karo</div>
+        <div class="opt-step"><span>5.</span> Settings → Pages → Branch: main → Save</div>
+        <div class="opt-step"><span>6.</span> 2 minute mein live URL milega ✅</div>
+      </div>
+    </div>
+
+    <div class="opt-card">
+      <div class="opt-badge b-easy">⚡ Easiest — 1 Minute</div>
+      <div class="opt-title">Netlify Drop</div>
+      <div class="opt-url">random-name.netlify.app</div>
+      <div class="opt-desc">Bilkul easy — drag and drop karo aur live ho jao. No account needed bhi ho sakta hai.</div>
+      <div class="opt-steps">
+        <div class="opt-step"><span>1.</span> app.netlify.com/drop pe jao</div>
+        <div class="opt-step"><span>2.</span> Apna folder drag &amp; drop karo</div>
+        <div class="opt-step"><span>3.</span> 30 seconds mein live URL milega ✅</div>
+        <div class="opt-step"><span>4.</span> Free account se custom URL bhi mil sakta hai</div>
+      </div>
+    </div>
+
+    <div class="opt-card">
+      <div class="opt-badge b-adv">🏢 Company Server</div>
+      <div class="opt-title">Local Network / Intranet</div>
+      <div class="opt-url">192.168.x.x/helpdesk</div>
+      <div class="opt-desc">Agar company ka internal server hai toh files wahan rakhdo. Internet ki zarurat nahi.</div>
+      <div class="opt-steps">
+        <div class="opt-step"><span>1.</span> IT Server mein folder banao: <code style="color:var(--gold2)">helpdesk/</code></div>
+        <div class="opt-step"><span>2.</span> Teeno HTML files us folder mein copy karo</div>
+        <div class="opt-step"><span>3.</span> IIS / Apache enable karo</div>
+        <div class="opt-step"><span>4.</span> Local IP share karo employees ke saath ✅</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-logo">
+    <svg viewBox="0 0 60 72" fill="none" width="60" height="72" style="margin:0 auto;display:block">
+      <rect width="60" height="72" rx="10" fill="#000"/>
+      <circle cx="30" cy="26" r="18" fill="#F5C842"/>
+      <rect x="8" y="40" width="44" height="22" fill="#C8960A"/>
+      <polygon points="30,12 44,36 16,36" fill="#C0392B"/>
+      <text x="30" y="30" font-family="serif" font-size="13" font-weight="bold" fill="white" text-anchor="middle">J</text>
+      <text x="30" y="54" font-family="sans-serif" font-size="7" font-weight="600" fill="#1a1a2e" text-anchor="middle">Since 1980</text>
+      <text x="30" y="67" font-family="sans-serif" font-size="8.5" font-weight="800" fill="white" text-anchor="middle">J. Kumar</text>
+    </svg>
+  </div>
+  <div class="footer-name" style="margin-top:12px">J. Kumar Infraprojects Limited</div>
+  <div style="font-size:11px;color:var(--muted);margin-top:4px">Building India's Infrastructure Since 1980</div>
+  <div class="footer-dev">
+    &copy; 2025 &nbsp;·&nbsp; IT Helpdesk Management System<br>
+    Designed &amp; Developed by <strong>Abhishek Tiwari</strong> &nbsp;|&nbsp; IT Professional, J. Kumar Infraprojects Ltd.<br>
+    <span style="font-size:10px;color:var(--dim)">Version 1.0 &nbsp;·&nbsp; All Rights Reserved</span>
+  </div>
+</div>
+
+<script>
+// Load live stats from localStorage
+function loadStats(){
+  try{
+    const t=JSON.parse(localStorage.getItem('jkumar_helpdesk_tickets')||'[]');
+    document.getElementById('stat-total').textContent=t.length;
+    document.getElementById('stat-open').textContent=t.filter(x=>x.status==='Open').length;
+    document.getElementById('stat-res').textContent=t.filter(x=>x.status==='Resolved').length;
+    document.getElementById('stat-users').textContent=[...new Set(t.map(x=>x.name.trim().toLowerCase()))].length;
+  }catch(e){}
+}
+loadStats();
+setInterval(loadStats,5000);
+
+// Fade in on scroll
+const obs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';obs.unobserve(e.target)}});
+},{threshold:.1});
+document.querySelectorAll('.portal-card,.storage-card,.step-card,.opt-card').forEach(el=>{
+  el.style.opacity='0';el.style.transform='translateY(24px)';el.style.transition='opacity .5s ease,transform .5s ease';
+  obs.observe(el);
+});
+</script>
+</body>
+</html>
