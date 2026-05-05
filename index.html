@@ -38,7 +38,18 @@ h1 em{font-style:normal;background:linear-gradient(135deg,var(--gold2),var(--gol
 .sb-num-prog{font-family:var(--mono);font-size:22px;font-weight:500;color:#fbbf24;animation:blink-prog 2s ease-in-out infinite;}
 @keyframes blink-prog{0%,100%{opacity:1;text-shadow:0 0 8px rgba(251,191,36,.6)}50%{opacity:.4;text-shadow:none}}
 .sb-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:820px;animation:up .6s ease .28s both;}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:900px;animation:up .6s ease .28s both;}
+.pcard-call{background:linear-gradient(145deg,#0a1a0a,#0f2010);border:1px solid rgba(34,197,94,.2);}
+.pcard-call:hover{border-color:rgba(34,197,94,.5);box-shadow:0 20px 50px rgba(34,197,94,.1);}
+.pcard-cadm{background:linear-gradient(145deg,#1a0a1a,#200f20);border:1px solid rgba(139,92,246,.2);}
+.pcard-cadm:hover{border-color:rgba(139,92,246,.5);box-shadow:0 20px 50px rgba(139,92,246,.1);}
+.pcard-call .card-title{color:#86efac}.pcard-cadm .card-title{color:#c4b5fd}
+.pcard-call .card-cta{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.2)}
+.pcard-call:hover .card-cta{background:rgba(34,197,94,.22)}
+.pcard-cadm .card-cta{background:rgba(139,92,246,.12);color:#c4b5fd;border:1px solid rgba(139,92,246,.2)}
+.pcard-cadm:hover .card-cta{background:rgba(139,92,246,.22)}
+.cb-call{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.25)}
+.cb-cadm{background:rgba(139,92,246,.12);color:#c4b5fd;border:1px solid rgba(139,92,246,.25)}
 .pcard{display:block;text-decoration:none;border-radius:18px;padding:32px 28px;transition:.35s cubic-bezier(.22,1,.36,1);}
 .pcard:hover{transform:translateY(-5px)}
 .pcard-emp{background:linear-gradient(145deg,#0c1a30,#111f3a);border:1px solid rgba(59,130,246,.2);}
@@ -121,6 +132,20 @@ footer strong{color:var(--gold2)}
       <div class="card-title">Admin Dashboard</div>
       <p class="card-desc">Manage all tickets, update status, view analytics and export GM-ready reports. Login required.</p>
       <div class="card-cta">Open Dashboard →</div>
+    </a>
+    <a href="call_portal.html" class="pcard pcard-call">
+      <span class="card-badge cb-call">👷 Engineers Only</span>
+      <span class="card-icon">📋</span>
+      <div class="card-title">Call Report v2.0</div>
+      <p class="card-desc">Submit detailed call report — problem, parts, PR/Cash purchase, photos. WhatsApp share auto.</p>
+      <div class="card-cta">Submit Call Report →</div>
+    </a>
+    <a href="call_admin.html" class="pcard pcard-cadm">
+      <span class="card-badge cb-cadm">🔐 GM / Admin View</span>
+      <span class="card-icon">🏆</span>
+      <div class="card-title">Call Reports Panel</div>
+      <p class="card-desc">All engineer call reports, purchase register, analytics, export GM PDF with full details.</p>
+      <div class="card-cta">Open Call Panel →</div>
     </a>
   </div>
 </main>
