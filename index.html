@@ -1,184 +1,396 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>J. Kumar Infraprojects – IT Helpdesk</title>
-<!-- FIX #6: Favicon/Tab Logo using SVG data URI -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 42 50' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='42' height='50' rx='6' fill='%23000'/%3E%3Ccircle cx='21' cy='17' r='12' fill='%23F5C842'/%3E%3Crect x='6' y='26' width='30' height='15' fill='%23C8960A'/%3E%3Cpolygon points='21,8 30,25 12,25' fill='%23C0392B'/%3E%3Ctext x='21' y='22' font-family='serif' font-size='9' font-weight='bold' fill='white' text-anchor='middle'%3EJ%3C/text%3E%3Ctext x='21' y='46' font-family='sans-serif' font-size='6' font-weight='800' fill='white' text-anchor='middle'%3EJ. Kumar%3C/text%3E%3C/svg%3E">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>J. Kumar IT Helpdesk — Employee Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC4wMqDNFPBiBQ2PzI8pBGwwbRWzfKnbz0",
+    authDomain: "jkumar-ithelpdesk.firebaseapp.com",
+    projectId: "jkumar-ithelpdesk",
+    storageBucket: "jkumar-ithelpdesk.appspot.com",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:abcdef1234567890"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window._db = db;
+  window._fbModules = { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc };
+
+  // Load live tickets
+  function loadTickets() {
+    const mobile = localStorage.getItem('emp_mobile');
+    if (!mobile) return;
+    const q = query(collection(db, 'tickets'), where('mobile', '==', mobile), orderBy('createdAt', 'desc'));
+    onSnapshot(q, (snap) => {
+      const tickets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderTickets(tickets);
+    });
+  }
+
+  function renderTickets(tickets) {
+    const container = document.getElementById('tickets-list');
+    if (!container) return;
+    if (tickets.length === 0) {
+      container.innerHTML = `<div class="text-center py-12 text-slate-400">
+        <span class="material-symbols-outlined text-4xl mb-2 block">confirmation_number</span>
+        <p class="text-sm">No tickets yet. Submit your first ticket!</p>
+      </div>`;
+      return;
+    }
+    container.innerHTML = tickets.map(t => {
+      const priorityMap = { Low: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', Medium: 'bg-amber-500/10 text-amber-400 border-amber-500/20', High: 'bg-orange-500/10 text-orange-400 border-orange-500/20', Critical: 'bg-red-500/10 text-red-400 border-red-500/20' };
+      const statusMap = { Open: 'text-blue-400', 'In Progress': 'text-amber-400', Resolved: 'text-emerald-400', Closed: 'text-slate-400' };
+      const iconMap = { 'Hardware Failure': 'computer', 'Software Installation': 'install_desktop', 'Network/VPN Issues': 'router', 'Access Request': 'key', 'Email Issues': 'mail', 'Printer Issues': 'print', 'Other': 'build' };
+      const icon = iconMap[t.category] || 'build';
+      const ts = t.createdAt?.toDate ? t.createdAt.toDate().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'Pending';
+      const isInProgress = t.status === 'In Progress';
+      const isCritical = t.priority === 'Critical';
+      return `
+      <div class="group bg-[#0f1e35] border ${isCritical && t.status !== 'Resolved' ? 'border-red-500/40' : 'border-[#1e3050]'} rounded-xl p-5 hover:border-blue-500/40 transition-all cursor-pointer" onclick="openRating('${t.id}', '${t.status}', ${t.rating || 0})">
+        <div class="flex justify-between items-start mb-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-[#142040] flex items-center justify-center">
+              <span class="material-symbols-outlined text-blue-400 text-lg">${icon}</span>
+            </div>
+            <div>
+              <p class="font-semibold text-white text-sm group-hover:text-blue-300 transition-colors">${t.subject || t.description?.slice(0,40) || 'IT Request'}</p>
+              <p class="text-xs text-slate-500">#${t.id.slice(-6).toUpperCase()} · ${ts}</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold px-2.5 py-1 rounded-full border ${priorityMap[t.priority] || priorityMap.Medium}">${t.priority}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            ${isInProgress ? `<span class="w-2 h-2 rounded-full bg-blue-400 status-pulse"></span>` : ''}
+            <span class="text-xs font-semibold ${statusMap[t.status] || 'text-slate-400'}">${t.status}</span>
+          </div>
+          ${t.status === 'Resolved' && !t.rating ? `<span class="text-xs text-blue-400 font-medium">Rate · ★</span>` : ''}
+          ${t.rating ? `<span class="text-xs text-amber-400">${'★'.repeat(t.rating)}${'☆'.repeat(5-t.rating)}</span>` : ''}
+        </div>
+        ${isInProgress ? `<div class="mt-3 h-1 bg-[#142040] rounded-full overflow-hidden"><div class="h-full bg-blue-500 rounded-full w-2/3 transition-all"></div></div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  window.submitTicket = async function() {
+    const name = document.getElementById('f-name').value.trim();
+    const dept = document.getElementById('f-dept').value;
+    const mobile = document.getElementById('f-mobile').value.trim();
+    const category = document.getElementById('f-category').value;
+    const priority = document.getElementById('selected-priority').value || 'Medium';
+    const description = document.getElementById('f-desc').value.trim();
+
+    if (!name || !mobile || !description) {
+      showToast('Please fill all required fields.', 'error'); return;
+    }
+    if (!/^[6-9]\d{9}$/.test(mobile)) {
+      showToast('Enter valid 10-digit mobile number.', 'error'); return;
+    }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">sync</span> Submitting...';
+
+    try {
+      localStorage.setItem('emp_mobile', mobile);
+      localStorage.setItem('emp_name', name);
+      await addDoc(collection(db, 'tickets'), {
+        name, department: dept, mobile, category, priority, description,
+        status: 'Open', createdAt: serverTimestamp(), rating: 0,
+        subject: `${category} — ${dept}`
+      });
+      showToast('Ticket submitted successfully! 🎉', 'success');
+      document.getElementById('f-desc').value = '';
+      document.getElementById('f-mobile').value = mobile;
+      loadTickets();
+    } catch(e) {
+      console.error(e);
+      showToast('Error submitting ticket. Try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined text-sm">send</span> Submit Ticket';
+    }
+  }
+
+  window.openRating = function(ticketId, status, currentRating) {
+    if (status !== 'Resolved') return;
+    if (currentRating > 0) return;
+    document.getElementById('rating-modal').classList.remove('hidden');
+    document.getElementById('rating-modal').dataset.ticketId = ticketId;
+    renderStars(0);
+  }
+
+  window.renderStars = function(hover) {
+    const stars = document.querySelectorAll('.star-btn');
+    stars.forEach((s, i) => {
+      s.innerHTML = i < hover ? '★' : '☆';
+      s.classList.toggle('text-amber-400', i < hover);
+      s.classList.toggle('text-slate-600', i >= hover);
+    });
+  }
+
+  window.submitRating = async function(rating) {
+    const id = document.getElementById('rating-modal').dataset.ticketId;
+    try {
+      await updateDoc(doc(db, 'tickets', id), { rating });
+      showToast('Thank you for your feedback! 🙏', 'success');
+      document.getElementById('rating-modal').classList.add('hidden');
+    } catch(e) { showToast('Could not save rating.', 'error'); }
+  }
+
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-xl transition-all ${type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`;
+    t.classList.remove('opacity-0', 'translate-y-4');
+    setTimeout(() => { t.classList.add('opacity-0', 'translate-y-4'); }, 3000);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const savedName = localStorage.getItem('emp_name');
+    const savedMobile = localStorage.getItem('emp_mobile');
+    if (savedName) document.getElementById('f-name').value = savedName;
+    if (savedMobile) { document.getElementById('f-mobile').value = savedMobile; loadTickets(); }
+    document.getElementById('f-mobile').addEventListener('blur', (e) => {
+      if (/^[6-9]\d{9}$/.test(e.target.value)) loadTickets();
+    });
+  });
+</script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Plus Jakarta Sans', 'sans-serif'] },
+      colors: {
+        navy: { 900: '#050d1a', 800: '#0a1628', 700: '#0f1e35', 600: '#142040', 500: '#1e3050' },
+        blue: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' },
+        brand: { yellow: '#F2D313', red: '#ED3237' }
+      }
+    }
+  }
+}
+</script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --dark:#060b14;--gold:#e8a020;--gold2:#f5c842;--gold3:#c8860a;
-  --text:#f0f4ff;--muted:#7b8db0;
-  --font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;
-}
-body{background:var(--dark);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;}
-.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(232,160,32,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(232,160,32,.04) 1px,transparent 1px);background-size:56px 56px;}
-.bg-glow{position:fixed;top:-180px;left:50%;transform:translateX(-50%);width:700px;height:380px;border-radius:50%;pointer-events:none;z-index:0;background:radial-gradient(ellipse,rgba(232,160,32,.09) 0%,transparent 70%);animation:glow 5s ease-in-out infinite;}
-@keyframes glow{0%,100%{opacity:.7}50%{opacity:1}}
-.header{position:relative;z-index:10;padding:18px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(232,160,32,.1);background:rgba(6,11,20,.7);backdrop-filter:blur(16px);}
-.brand{display:flex;align-items:center;gap:12px}
-.logo-wrap{width:42px;height:50px;border-radius:7px;overflow:hidden;border:1px solid rgba(232,160,32,.35);background:#000;flex-shrink:0;}
-.bn{font-size:14px;font-weight:800;color:var(--gold2);letter-spacing:.2px}
-.bs{font-size:10px;color:var(--muted);margin-top:2px}
-.header-badge{background:rgba(232,160,32,.1);border:1px solid rgba(232,160,32,.25);color:var(--gold2);font-size:10px;font-weight:700;padding:5px 13px;border-radius:20px;letter-spacing:.4px;}
-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;position:relative;z-index:1;}
-.eyebrow{display:inline-flex;align-items:center;gap:7px;background:rgba(232,160,32,.07);border:1px solid rgba(232,160,32,.18);color:var(--gold2);font-size:10px;font-weight:700;padding:5px 14px;border-radius:20px;margin-bottom:24px;letter-spacing:.6px;text-transform:uppercase;animation:up .5s ease both;}
-h1{font-size:clamp(32px,5.5vw,64px);font-weight:900;line-height:1.08;letter-spacing:-1.5px;text-align:center;margin-bottom:16px;animation:up .55s ease .08s both;}
-h1 em{font-style:normal;background:linear-gradient(135deg,var(--gold2),var(--gold3),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200% auto;animation:shimmer 3s linear infinite;}
-@keyframes shimmer{0%{background-position:0% center}100%{background-position:200% center}}
-.sub{font-size:15px;color:var(--muted);text-align:center;max-width:460px;line-height:1.65;margin-bottom:48px;font-weight:400;animation:up .55s ease .16s both;}
-.stats-bar{display:flex;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;margin-bottom:48px;overflow:hidden;animation:up .55s ease .22s both;}
-.sb-item{padding:12px 28px;text-align:center;border-right:1px solid rgba(255,255,255,.07);}
-.sb-item:last-child{border-right:none}
-/* FIX #3: Blink animation for In Progress stat */
-.sb-num{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--gold2)}
-.sb-num-prog{font-family:var(--mono);font-size:22px;font-weight:500;color:#fbbf24;animation:blink-prog 2s ease-in-out infinite;}
-@keyframes blink-prog{0%,100%{opacity:1;text-shadow:0 0 8px rgba(251,191,36,.6)}50%{opacity:.4;text-shadow:none}}
-.sb-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:900px;animation:up .6s ease .28s both;}
-.pcard-call{background:linear-gradient(145deg,#0a1a0a,#0f2010);border:1px solid rgba(34,197,94,.2);}
-.pcard-call:hover{border-color:rgba(34,197,94,.5);box-shadow:0 20px 50px rgba(34,197,94,.1);}
-.pcard-cadm{background:linear-gradient(145deg,#1a0a1a,#200f20);border:1px solid rgba(139,92,246,.2);}
-.pcard-cadm:hover{border-color:rgba(139,92,246,.5);box-shadow:0 20px 50px rgba(139,92,246,.1);}
-.pcard-call .card-title{color:#86efac}.pcard-cadm .card-title{color:#c4b5fd}
-.pcard-call .card-cta{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.2)}
-.pcard-call:hover .card-cta{background:rgba(34,197,94,.22)}
-.pcard-cadm .card-cta{background:rgba(139,92,246,.12);color:#c4b5fd;border:1px solid rgba(139,92,246,.2)}
-.pcard-cadm:hover .card-cta{background:rgba(139,92,246,.22)}
-.cb-call{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.25)}
-.cb-cadm{background:rgba(139,92,246,.12);color:#c4b5fd;border:1px solid rgba(139,92,246,.25)}
-.pcard{display:block;text-decoration:none;border-radius:18px;padding:32px 28px;transition:.35s cubic-bezier(.22,1,.36,1);}
-.pcard:hover{transform:translateY(-5px)}
-.pcard-emp{background:linear-gradient(145deg,#0c1a30,#111f3a);border:1px solid rgba(59,130,246,.2);}
-.pcard-emp:hover{border-color:rgba(59,130,246,.5);box-shadow:0 20px 50px rgba(59,130,246,.12);}
-.pcard-adm{background:linear-gradient(145deg,#130e02,#1c1504);border:1px solid rgba(232,160,32,.2);}
-.pcard-adm:hover{border-color:rgba(232,160,32,.5);box-shadow:0 20px 50px rgba(232,160,32,.1);}
-.card-badge{display:inline-block;font-size:9px;font-weight:700;padding:3px 11px;border-radius:20px;margin-bottom:18px;letter-spacing:.5px;text-transform:uppercase;}
-.cb-emp{background:rgba(59,130,246,.12);color:#7eb8f7;border:1px solid rgba(59,130,246,.25)}
-.cb-adm{background:rgba(232,160,32,.1);color:var(--gold2);border:1px solid rgba(232,160,32,.25)}
-.card-icon{font-size:40px;margin-bottom:14px;display:block}
-.card-title{font-size:22px;font-weight:800;margin-bottom:9px;line-height:1.2;letter-spacing:-.3px;}
-.pcard-emp .card-title{color:#93c5fd}
-.pcard-adm .card-title{color:var(--gold2)}
-.card-desc{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:22px;font-weight:400}
-.card-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.2px;padding:10px 18px;border-radius:9px;transition:.2s;}
-.pcard-emp .card-cta{background:rgba(59,130,246,.12);color:#7eb8f7;border:1px solid rgba(59,130,246,.2)}
-.pcard-emp:hover .card-cta{background:rgba(59,130,246,.22)}
-.pcard-adm .card-cta{background:rgba(232,160,32,.1);color:var(--gold2);border:1px solid rgba(232,160,32,.2)}
-.pcard-adm:hover .card-cta{background:rgba(232,160,32,.2)}
-footer{position:relative;z-index:1;text-align:center;padding:20px 24px;border-top:1px solid rgba(255,255,255,.05);font-size:11px;color:var(--muted);line-height:1.8;}
-footer strong{color:var(--gold2)}
-@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:560px){
-  .cards{grid-template-columns:1fr}
-  .stats-bar{flex-wrap:wrap}
-  .sb-item{flex:1;min-width:90px;border-right:none;border-bottom:1px solid rgba(255,255,255,.07)}
-  .sb-item:last-child{border-bottom:none}
-  .header{padding:14px 16px}
-}
+  body { background: #050d1a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+  .status-pulse { animation: pulse-dot 2s cubic-bezier(.455,.03,.515,.955) infinite; }
+  @keyframes pulse-dot { 0%,100% { transform: scale(.8); opacity:1; } 50% { transform: scale(1.3); opacity:.5; } }
+  .glass { background: rgba(10,22,40,0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.06); }
+  .priority-btn.active { border-color: var(--active-color) !important; background: rgba(var(--active-rgb),0.1) !important; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #0a1628; } ::-webkit-scrollbar-thumb { background: #1e3050; border-radius: 4px; }
+  input, select, textarea { background: #0f1e35 !important; border-color: #1e3050 !important; color: #e2e8f0 !important; }
+  input:focus, select:focus, textarea:focus { border-color: #2563eb !important; box-shadow: 0 0 0 2px rgba(37,99,235,0.2) !important; outline: none; }
+  input::placeholder, textarea::placeholder { color: #475569; }
+  select option { background: #0f1e35; color: #e2e8f0; }
 </style>
 </head>
-<body>
-<div class="bg-grid"></div>
-<div class="bg-glow"></div>
+<body class="min-h-screen">
 
-<div class="header">
-  <div class="brand">
-    <div class="logo-wrap">
-      <svg viewBox="0 0 42 50" fill="none" width="42" height="50">
-        <rect width="42" height="50" rx="6" fill="#000"/>
-        <circle cx="21" cy="17" r="12" fill="#F5C842"/>
-        <rect x="6" y="26" width="30" height="15" fill="#C8960A"/>
-        <polygon points="21,8 30,25 12,25" fill="#C0392B"/>
-        <text x="21" y="22" font-family="serif" font-size="9" font-weight="bold" fill="white" text-anchor="middle">J</text>
-        <text x="21" y="35" font-family="sans-serif" font-size="5" font-weight="600" fill="#1a1a2e" text-anchor="middle">Since 1980</text>
-        <text x="21" y="46" font-family="sans-serif" font-size="6" font-weight="800" fill="white" text-anchor="middle">J. Kumar</text>
-      </svg>
+<!-- TOP BAR -->
+<header class="sticky top-0 z-50 border-b border-[#1e3050]" style="background: rgba(5,13,26,0.95); backdrop-filter: blur(20px);">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
+        <span class="material-symbols-outlined text-white text-lg" style="font-variation-settings:'FILL' 1">support_agent</span>
+      </div>
+      <div>
+        <h1 class="font-display font-bold text-white text-base leading-none">J. Kumar IT Helpdesk</h1>
+        <p class="text-xs text-slate-500 mt-0.5">Employee Portal</p>
+      </div>
     </div>
-    <div>
-      <div class="bn">J. Kumar Infraprojects Ltd.</div>
-      <div class="bs">IT Helpdesk System</div>
+    <div class="flex items-center gap-3">
+      <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-xs text-emerald-400 font-medium">System Live</span>
+      </div>
+      <a href="admin.html" class="text-xs text-slate-500 hover:text-blue-400 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-[#0f1e35]">Admin →</a>
     </div>
   </div>
-  <div class="header-badge">🏗️ Internal Portal</div>
+</header>
+
+<!-- HERO GREETING -->
+<div class="max-w-7xl mx-auto px-6 pt-10 pb-6">
+  <h2 class="font-display font-bold text-3xl text-white mb-1">Good day! 👋</h2>
+  <p class="text-slate-400 text-base">How can the IT team help you today?</p>
 </div>
 
-<main>
-  <div class="eyebrow">🔧 IT Support · J. Kumar Infraprojects</div>
-  <h1>IT Helpdesk<br><em>Management System</em></h1>
-  <p class="sub">Raise IT requests, track status, and manage support tickets — all in one place. Open on any device.</p>
+<!-- MAIN LAYOUT -->
+<main class="max-w-7xl mx-auto px-6 pb-20">
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
-  <div class="stats-bar">
-    <div class="sb-item"><div class="sb-num" id="s-total">0</div><div class="sb-lbl">Total Tickets</div></div>
-    <div class="sb-item"><div class="sb-num" id="s-open" style="color:#f87171">0</div><div class="sb-lbl">Open</div></div>
-    <div class="sb-item"><div class="sb-num-prog" id="s-prog">0</div><div class="sb-lbl">In Progress</div></div>
-    <div class="sb-item"><div class="sb-num" id="s-res" style="color:#4ade80">0</div><div class="sb-lbl">Resolved</div></div>
-  </div>
+    <!-- TICKET FORM -->
+    <div class="xl:col-span-7">
+      <div class="bg-[#0a1628] border border-[#1e3050] rounded-2xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-[#1e3050] flex items-center gap-2.5 bg-[#0f1e35]/50">
+          <span class="material-symbols-outlined text-blue-400 text-xl">add_task</span>
+          <h3 class="font-display font-semibold text-white">Raise a New Ticket</h3>
+        </div>
+        <div class="p-6 space-y-5">
+          <!-- Name + Dept -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Full Name *</label>
+              <input id="f-name" type="text" placeholder="Your full name" class="w-full px-4 py-3 rounded-xl text-sm transition-all"/>
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Department</label>
+              <select id="f-dept" class="w-full px-4 py-3 rounded-xl text-sm transition-all">
+                <option>Infrastructure Operations</option>
+                <option>Site Management</option>
+                <option>Accounts & Finance</option>
+                <option>HR & Admin</option>
+                <option>Procurement</option>
+                <option>Legal & Compliance</option>
+                <option>Management</option>
+              </select>
+            </div>
+          </div>
+          <!-- Mobile + Category -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Mobile Number *</label>
+              <input id="f-mobile" type="tel" placeholder="10-digit mobile" maxlength="10" class="w-full px-4 py-3 rounded-xl text-sm transition-all"/>
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Issue Category</label>
+              <select id="f-category" class="w-full px-4 py-3 rounded-xl text-sm transition-all">
+                <option>Hardware Failure</option>
+                <option>Software Installation</option>
+                <option>Network/VPN Issues</option>
+                <option>Access Request</option>
+                <option>Email Issues</option>
+                <option>Printer Issues</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <!-- Priority -->
+          <div class="space-y-2">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Priority Level</label>
+            <input type="hidden" id="selected-priority" value="Medium"/>
+            <div class="grid grid-cols-4 gap-2">
+              <button onclick="setPriority(this,'Low','#22c55e','34,197,94')" class="priority-btn border border-[#1e3050] rounded-xl py-3 flex flex-col items-center gap-1.5 transition-all hover:border-emerald-500/50 text-slate-400 hover:text-emerald-400" style="--active-color:#22c55e;--active-rgb:34,197,94">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <span class="text-xs font-semibold">Low</span>
+              </button>
+              <button onclick="setPriority(this,'Medium','#facc15','250,204,21')" class="priority-btn border-2 border-amber-500/50 rounded-xl py-3 flex flex-col items-center gap-1.5 transition-all text-amber-400 active" style="--active-color:#facc15;--active-rgb:250,204,21;background:rgba(250,204,21,0.08)">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <span class="text-xs font-semibold">Medium</span>
+              </button>
+              <button onclick="setPriority(this,'High','#f97316','249,115,22')" class="priority-btn border border-[#1e3050] rounded-xl py-3 flex flex-col items-center gap-1.5 transition-all hover:border-orange-500/50 text-slate-400 hover:text-orange-400" style="--active-color:#f97316;--active-rgb:249,115,22">
+                <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                <span class="text-xs font-semibold">High</span>
+              </button>
+              <button onclick="setPriority(this,'Critical','#ef4444','239,68,68')" class="priority-btn border border-[#1e3050] rounded-xl py-3 flex flex-col items-center gap-1.5 transition-all hover:border-red-500/50 text-slate-400 hover:text-red-400" style="--active-color:#ef4444;--active-rgb:239,68,68">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                <span class="text-xs font-semibold">Critical</span>
+              </button>
+            </div>
+          </div>
+          <!-- Description -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Issue Description *</label>
+            <textarea id="f-desc" rows="4" placeholder="Describe the issue clearly — what happened, when it started, and what you've tried..." class="w-full px-4 py-3 rounded-xl text-sm resize-none transition-all"></textarea>
+          </div>
+          <!-- Actions -->
+          <div class="flex justify-end gap-3 pt-2">
+            <button onclick="clearForm()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:bg-[#0f1e35] transition-all">Clear</button>
+            <button id="submit-btn" onclick="submitTicket()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-7 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 shadow-lg shadow-blue-600/20">
+              <span class="material-symbols-outlined text-sm">send</span> Submit Ticket
+            </button>
+          </div>
+        </div>
+      </div>
 
-  <div class="cards">
-    <a href="employee_portal.html" class="pcard pcard-emp">
-      <span class="card-badge cb-emp">👤 For All Employees</span>
-      <span class="card-icon">🎫</span>
-      <div class="card-title">Employee Portal</div>
-      <p class="card-desc">Submit IT support requests from any device — mobile, tablet or desktop. Track your ticket status in real time.</p>
-      <div class="card-cta">Open Portal →</div>
-    </a>
-    <a href="admin_portal.html" class="pcard pcard-adm">
-      <span class="card-badge cb-adm">🔐 IT Team Only</span>
-      <span class="card-icon">📊</span>
-      <div class="card-title">Admin Dashboard</div>
-      <p class="card-desc">Manage all tickets, update status, view analytics and export GM-ready reports. Login required.</p>
-      <div class="card-cta">Open Dashboard →</div>
-    </a>
-    <a href="call_portal.html" class="pcard pcard-call">
-      <span class="card-badge cb-call">👷 Engineers Only</span>
-      <span class="card-icon">📋</span>
-      <div class="card-title">Call Report v2.0</div>
-      <p class="card-desc">Submit detailed call report — problem, parts, PR/Cash purchase, photos. WhatsApp share auto.</p>
-      <div class="card-cta">Submit Call Report →</div>
-    </a>
-    <a href="call_admin.html" class="pcard pcard-cadm">
-      <span class="card-badge cb-cadm">🔐 GM / Admin View</span>
-      <span class="card-icon">🏆</span>
-      <div class="card-title">Call Reports Panel</div>
-      <p class="card-desc">All engineer call reports, purchase register, analytics, export GM PDF with full details.</p>
-      <div class="card-cta">Open Call Panel →</div>
-    </a>
+      <!-- EMERGENCY CARD -->
+      <div class="mt-4 relative overflow-hidden bg-gradient-to-r from-blue-600/20 to-blue-500/10 border border-blue-500/20 rounded-2xl p-5 flex items-center justify-between">
+        <div>
+          <p class="font-display font-semibold text-white text-sm mb-1">Need immediate help?</p>
+          <p class="text-xs text-slate-400">IT team available Mon–Sat, 9AM–7PM</p>
+        </div>
+        <a href="tel:+912212345678" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-blue-500 transition-all">
+          <span class="material-symbols-outlined text-sm">call</span>Call IT
+        </a>
+        <span class="material-symbols-outlined absolute -right-3 -bottom-3 text-7xl text-blue-400/10 rotate-12">support_agent</span>
+      </div>
+    </div>
+
+    <!-- MY TICKETS -->
+    <div class="xl:col-span-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display font-semibold text-white">My Tickets</h3>
+        <span class="text-xs text-slate-500">Tap resolved to rate</span>
+      </div>
+      <div id="tickets-list" class="space-y-3">
+        <div class="text-center py-12 text-slate-500 bg-[#0a1628] border border-[#1e3050] rounded-2xl">
+          <span class="material-symbols-outlined text-4xl mb-2 block text-slate-600">inbox</span>
+          <p class="text-sm">Enter your mobile number to load tickets</p>
+        </div>
+      </div>
+    </div>
+
   </div>
 </main>
 
-<footer>
-  &copy; 2025 J. Kumar Infraprojects Limited &nbsp;·&nbsp; IT Helpdesk System &nbsp;·&nbsp;
-  Designed &amp; Developed by <strong>Abhishek Tiwari</strong> &nbsp;|&nbsp; IT Professional
+<!-- RATING MODAL -->
+<div id="rating-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(5,13,26,0.85);backdrop-filter:blur(8px)">
+  <div class="bg-[#0a1628] border border-[#1e3050] rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
+    <span class="material-symbols-outlined text-4xl text-amber-400 mb-3 block" style="font-variation-settings:'FILL' 1">star</span>
+    <h3 class="font-display font-bold text-white text-lg mb-1">Rate Your Experience</h3>
+    <p class="text-slate-400 text-sm mb-6">How satisfied are you with the resolution?</p>
+    <div class="flex justify-center gap-3 mb-6">
+      <button class="star-btn text-4xl text-slate-600 transition-all hover:scale-110" onmouseenter="renderStars(1)" onmouseleave="renderStars(0)" onclick="submitRating(1)">☆</button>
+      <button class="star-btn text-4xl text-slate-600 transition-all hover:scale-110" onmouseenter="renderStars(2)" onmouseleave="renderStars(0)" onclick="submitRating(2)">☆</button>
+      <button class="star-btn text-4xl text-slate-600 transition-all hover:scale-110" onmouseenter="renderStars(3)" onmouseleave="renderStars(0)" onclick="submitRating(3)">☆</button>
+      <button class="star-btn text-4xl text-slate-600 transition-all hover:scale-110" onmouseenter="renderStars(4)" onmouseleave="renderStars(0)" onclick="submitRating(4)">☆</button>
+      <button class="star-btn text-4xl text-slate-600 transition-all hover:scale-110" onmouseenter="renderStars(5)" onmouseleave="renderStars(0)" onclick="submitRating(5)">☆</button>
+    </div>
+    <button onclick="document.getElementById('rating-modal').classList.add('hidden')" class="text-sm text-slate-500 hover:text-slate-300 transition-colors">Maybe later</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-xl opacity-0 translate-y-4 transition-all duration-300"></div>
+
+<!-- FOOTER -->
+<footer class="border-t border-[#1e3050] mt-8">
+  <div class="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row justify-between items-center gap-3">
+    <p class="text-xs text-slate-600 font-medium">© 2025 J. Kumar Infraprojects Ltd. — IT Department</p>
+    <div class="flex gap-4">
+      <a href="admin.html" class="text-xs text-slate-600 hover:text-blue-400 transition-colors">Admin</a>
+      <a href="engineer.html" class="text-xs text-slate-600 hover:text-blue-400 transition-colors">Engineer</a>
+      <a href="gm-report.html" class="text-xs text-slate-600 hover:text-blue-400 transition-colors">GM Report</a>
+    </div>
+  </div>
 </footer>
 
-<script type="module">
-import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy }
-  from "https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey:"AIzaSyD1NaEmIB9yBh7eoaxOAEV1jVbjE76LZa8",
-  authDomain:"jkumar-ithelpdesk.firebaseapp.com",
-  projectId:"jkumar-ithelpdesk",
-  storageBucket:"jkumar-ithelpdesk.firebasestorage.app",
-  messagingSenderId:"638863597956",
-  appId:"1:638863597956:web:506d8e62c98c29729c3dd1",
-  measurementId:"G-WC1X4SH7MV"
-};
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-const q = query(collection(db,"tickets"), orderBy("createdAt","desc"));
-onSnapshot(q, snap => {
-  const t = snap.docs.map(d => d.data());
-  document.getElementById('s-total').textContent = t.length;
-  document.getElementById('s-open').textContent  = t.filter(x=>x.status==='Open').length;
-  document.getElementById('s-prog').textContent  = t.filter(x=>x.status==='In Progress'||x.status==='Assigned').length;
-  document.getElementById('s-res').textContent   = t.filter(x=>x.status==='Resolved'||x.status==='Closed').length;
-}, err => console.warn('Firebase error on index:', err));
+<script>
+function setPriority(btn, val, color, rgb) {
+  document.getElementById('selected-priority').value = val;
+  document.querySelectorAll('.priority-btn').forEach(b => {
+    b.style.borderColor = '';
+    b.style.background = '';
+    b.classList.remove('active');
+    b.style.color = '';
+  });
+  btn.style.borderColor = color;
+  btn.style.background = `rgba(${rgb},0.12)`;
+  btn.style.color = color;
+  btn.classList.add('active');
+}
+function clearForm() {
+  document.getElementById('f-desc').value = '';
+  setPriority(document.querySelectorAll('.priority-btn')[1], 'Medium', '#facc15', '250,204,21');
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>J. Kumar Infraprojects — IT Helpdesk</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body { background: #050d1a; color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.hero-grid { background-image: radial-gradient(rgba(37,99,235,0.12) 1px, transparent 1px); background-size: 32px 32px; }
+.glow-blue { box-shadow: 0 0 40px rgba(37,99,235,0.15), 0 0 80px rgba(37,99,235,0.05); }
+.card-hover { transition: all 0.2s ease; cursor: pointer; }
+.card-hover:hover { transform: translateY(-4px); border-color: rgba(37,99,235,0.4) !important; box-shadow: 0 20px 40px rgba(37,99,235,0.1); }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+.float { animation: float 4s ease-in-out infinite; }
+@keyframes counter-up { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.counter { animation: counter-up 0.5s ease forwards; }
+</style>
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { display: ['Plus Jakarta Sans','sans-serif'] } } } }
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, query, onSnapshot, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC4wMqDNFPBiBQ2PzI8pBGwwbRWzfKnbz0",
+  authDomain: "jkumar-ithelpdesk.firebaseapp.com",
+  projectId: "jkumar-ithelpdesk",
+  storageBucket: "jkumar-ithelpdesk.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:abcdef1234567890"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+onSnapshot(collection(db, 'tickets'), (snap) => {
+  const tickets = snap.docs.map(d => d.data());
+  const open = tickets.filter(t => t.status === 'Open').length;
+  const resolved = tickets.filter(t => t.status === 'Resolved').length;
+  const total = tickets.length;
+  const rate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+  animateCount('stat-open', open);
+  animateCount('stat-resolved', resolved);
+  animateCount('stat-rate', rate, '%');
+  document.getElementById('stat-total').textContent = total;
+});
+
+onSnapshot(collection(db, 'callReports'), (snap) => {
+  animateCount('stat-reports', snap.size);
+});
+
+function animateCount(id, target, suffix = '') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let start = 0;
+  const step = Math.ceil(target / 20);
+  const timer = setInterval(() => {
+    start = Math.min(start + step, target);
+    el.textContent = start + suffix;
+    if (start >= target) clearInterval(timer);
+  }, 40);
+}
+</script>
+</head>
+<body class="min-h-screen">
+
+<!-- TOP BAR -->
+<header class="border-b border-[#1e3050]" style="background:rgba(5,13,26,0.9);backdrop-filter:blur(20px)">
+  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
+        <span class="material-symbols-outlined text-white text-lg" style="font-variation-settings:'FILL' 1">computer</span>
+      </div>
+      <div>
+        <p class="font-display font-bold text-white text-sm leading-none">J. Kumar Infraprojects</p>
+        <p class="text-xs text-slate-500 mt-0.5">IT Helpdesk System</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-xs text-emerald-400 font-medium hidden sm:inline">System Online</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero-grid relative overflow-hidden">
+  <div class="absolute inset-0" style="background:radial-gradient(ellipse at 50% 0%, rgba(37,99,235,0.12) 0%, transparent 70%)"></div>
+  <div class="relative max-w-6xl mx-auto px-6 py-20 text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600/10 border border-blue-500/20 mb-6">
+      <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+      <span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Live System — Firebase Powered</span>
+    </div>
+    <h1 class="font-display font-bold text-5xl sm:text-6xl text-white mb-4 leading-tight">
+      IT Support<br/><span class="text-blue-400">Made Simple</span>
+    </h1>
+    <p class="text-slate-400 text-lg max-w-xl mx-auto mb-10">J. Kumar Infraprojects IT Helpdesk. Submit tickets, track status, and get support — fast.</p>
+
+    <!-- LIVE STATS BAR -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto mb-12">
+      <div class="bg-[#0a1628]/80 border border-[#1e3050] rounded-2xl p-4 glow-blue float" style="animation-delay:0s">
+        <p id="stat-open" class="font-display font-bold text-3xl text-red-400 counter">—</p>
+        <p class="text-xs text-slate-500 mt-1">Open Tickets</p>
+      </div>
+      <div class="bg-[#0a1628]/80 border border-[#1e3050] rounded-2xl p-4 float" style="animation-delay:.5s">
+        <p id="stat-resolved" class="font-display font-bold text-3xl text-emerald-400 counter">—</p>
+        <p class="text-xs text-slate-500 mt-1">Resolved</p>
+      </div>
+      <div class="bg-[#0a1628]/80 border border-[#1e3050] rounded-2xl p-4 float" style="animation-delay:1s">
+        <p id="stat-rate" class="font-display font-bold text-3xl text-blue-400 counter">—</p>
+        <p class="text-xs text-slate-500 mt-1">Resolution Rate</p>
+      </div>
+      <div class="bg-[#0a1628]/80 border border-[#1e3050] rounded-2xl p-4 float" style="animation-delay:1.5s">
+        <p id="stat-reports" class="font-display font-bold text-3xl text-amber-400 counter">—</p>
+        <p class="text-xs text-slate-500 mt-1">Call Reports</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PORTAL CARDS -->
+<section class="max-w-6xl mx-auto px-6 py-16">
+  <h2 class="font-display font-bold text-2xl text-white text-center mb-3">Select Your Portal</h2>
+  <p class="text-slate-500 text-center text-sm mb-10">Each portal is role-specific. Click to access.</p>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+    <!-- Employee -->
+    <a href="index.html" class="card-hover bg-[#0a1628] border border-[#1e3050] rounded-2xl p-6 text-center block">
+      <div class="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/20 flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-blue-400 text-2xl" style="font-variation-settings:'FILL' 1">person</span>
+      </div>
+      <h3 class="font-display font-bold text-white mb-2">Employee Portal</h3>
+      <p class="text-xs text-slate-500 mb-4">Submit IT tickets, track status, rate resolutions</p>
+      <span class="inline-flex items-center gap-1.5 text-xs text-blue-400 font-semibold">
+        Open Portal <span class="material-symbols-outlined text-sm">arrow_forward</span>
+      </span>
+    </a>
+
+    <!-- Admin -->
+    <a href="admin.html" class="card-hover bg-[#0a1628] border border-[#1e3050] rounded-2xl p-6 text-center block">
+      <div class="w-14 h-14 rounded-2xl bg-purple-600/20 border border-purple-500/20 flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-purple-400 text-2xl" style="font-variation-settings:'FILL' 1">admin_panel_settings</span>
+      </div>
+      <h3 class="font-display font-bold text-white mb-2">Admin Dashboard</h3>
+      <p class="text-xs text-slate-500 mb-4">Manage tickets, assign engineers, view analytics</p>
+      <span class="inline-flex items-center gap-1.5 text-xs text-purple-400 font-semibold">
+        Admin Login <span class="material-symbols-outlined text-sm">lock</span>
+      </span>
+    </a>
+
+    <!-- Engineer -->
+    <a href="engineer.html" class="card-hover bg-[#0a1628] border border-[#1e3050] rounded-2xl p-6 text-center block">
+      <div class="w-14 h-14 rounded-2xl bg-amber-600/20 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-amber-400 text-2xl" style="font-variation-settings:'FILL' 1">engineering</span>
+      </div>
+      <h3 class="font-display font-bold text-white mb-2">Engineer Portal</h3>
+      <p class="text-xs text-slate-500 mb-4">Log daily call reports and site visit records</p>
+      <span class="inline-flex items-center gap-1.5 text-xs text-amber-400 font-semibold">
+        Log Report <span class="material-symbols-outlined text-sm">arrow_forward</span>
+      </span>
+    </a>
+
+    <!-- GM -->
+    <a href="gm-report.html" class="card-hover bg-[#0a1628] border border-[#1e3050] rounded-2xl p-6 text-center block">
+      <div class="w-14 h-14 rounded-2xl bg-emerald-600/20 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-emerald-400 text-2xl" style="font-variation-settings:'FILL' 1">summarize</span>
+      </div>
+      <h3 class="font-display font-bold text-white mb-2">GM Report View</h3>
+      <p class="text-xs text-slate-500 mb-4">Read-only summary with PDF export for management</p>
+      <span class="inline-flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
+        View Reports <span class="material-symbols-outlined text-sm">arrow_forward</span>
+      </span>
+    </a>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="border-t border-[#1e3050] px-6 py-6 mt-8">
+  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+    <div>
+      <p class="text-sm font-display font-semibold text-white">J. Kumar Infraprojects Ltd.</p>
+      <p class="text-xs text-slate-600 mt-0.5">IT Department — Internal System</p>
+    </div>
+    <p class="text-xs text-slate-600">© 2025 All Rights Reserved · Powered by Firebase</p>
+  </div>
+</footer>
+
+</body>
+</html>
